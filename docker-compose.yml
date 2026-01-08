@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: fastapi
+      POSTGRES_PASSWORD: fastapi123
+      POSTGRES_DB: fastapi_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  fastapi:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://fastapi:fastapi123@postgres:5432/fastapi_db
+      SECRET_KEY: ma-super-cle-secrete-fastapi-2026-apprentissage
+      ALGORITHM: HS256
+    depends_on:
+      - postgres
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "sleep 5 && 
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+volumes:
+  postgres_data:
