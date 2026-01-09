@@ -13,7 +13,18 @@ from app.database import Base as BaseDB
 
 # Charger la configuration
 config = context.config
-fileConfig(config.config_file_name) if config.config_file_name else None
+
+# CORRECTION : Configurer un logging basique au lieu de fileConfig
+import logging
+logging.basicConfig(level=logging.WARNING)
+
+# Tentative de charger fileConfig uniquement si la section [formatters] existe
+try:
+    if config.config_file_name:
+        fileConfig(config.config_file_name)
+except KeyError as e:
+    # Si la section manque, on continue sans logging configuré
+    print(f"Note: Logging configuration skipped - {e}")
 
 # Définir target_metadata
 target_metadata = [Base.metadata, BaseDB.metadata]
@@ -30,11 +41,17 @@ def run_migrations_offline():
         context.run_migrations()
 
 def run_migrations_online():
+    # Utiliser DATABASE_URL de l'environnement si disponible
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        config.set_main_option("sqlalchemy.url", database_url)
+    
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
+    
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
