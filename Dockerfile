@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Installer Alembic pour les migrations
-RUN pip install alembic psycopg2-binary
+# ~~SUPPRIMER CETTE LIGNE~~ (alembic est déjà dans requirements.txt)
+# RUN pip install alembic psycopg2-binary
 
 # Copier le code
 COPY . .
@@ -21,8 +21,8 @@ COPY . .
 # Variables d'environnement
 ENV PYTHONPATH=/app
 
-# Port exposé
+# Port exposé (informative, Render utilise $PORT)
 EXPOSE 8000
 
-# Commande par défaut
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Commande corrigée pour Render
+CMD sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port \$PORT"
